@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.upload-box {
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.8) 0%, rgba(226, 232, 240, 0.4) 100%);
+    border: 2px dashed #cbd5e1;
+    transition: all 0.3s ease;
+}
+
+html.dark .upload-box {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.6) 0%, rgba(15, 23, 42, 0.2) 100%);
+    border-color: #1e293b;
+}
+
+.upload-box.dragover {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 30px rgba(14, 165, 233, 0.15) inset;
+}
+
+html.dark .upload-box.dragover {
+    background: linear-gradient(180deg, rgba(14, 165, 233, 0.1) 0%, rgba(15, 23, 42, 0.4) 100%);
+}
+
+.switch-toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.switch-toggle input { opacity: 0; width: 0; height: 0; }
+.slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s; border-radius: 999px; }
+html.dark .slider-round { background-color: #1e293b; border: 1px solid #334155; }
+.slider-round:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider-round { background-color: #0ea5e9; border-color: #0ea5e9; }
+input:checked + .slider-round:before { transform: translateX(18px); }
+
+input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; border-radius: 999px; background: var(--track-bg, #cbd5e1); }
+html.dark input[type=range]::-webkit-slider-runnable-track { background: var(--track-bg, #1e293b); }
+input[type=range]::-webkit-slider-thumb { height: 20px; width: 20px; border-radius: 50%; background: #38bdf8; cursor: pointer; -webkit-appearance: none; margin-top: -7px; box-shadow: 0 0 10px rgba(56,189,248,0.5); border: 2px solid #fff; }
+html.dark input[type=range]::-webkit-slider-thumb { border-color: #0f172a; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+html.dark ::-webkit-scrollbar-thumb { background: #1e293b; }
+
+.card-active { border-color: #0ea5e9 !important; background-color: rgba(14, 165, 233, 0.04) !important; box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
+html.dark .card-active { background-color: rgba(14, 165, 233, 0.07) !important; }
+.card-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+
+.comparison-container { position: relative; width: 100%; height: 280px; overflow: hidden; border-radius: 12px; border: 1px solid #e2e8f0; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAMUlEQVQ4T2NkYGAQYcAP3uCTZxg1gILBcMACamzEQG4n48A0zECAYXwYNYCCwXDAAmpsoEAcAHNtIQfQkMmlAAAAAElFTkSuQmCC') repeat; }
+html.dark .comparison-container { border-color: #1e293b; }
+.comp-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
+.img-before { z-index: 10; }
+.img-after { z-index: 20; clip-path: inset(0 0 0 50%); }
+.split-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40; opacity: 0; cursor: ew-resize; }
+.split-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: #38bdf8; z-index: 30; transform: translateX(-50%); pointer-events: none; box-shadow: 0 0 10px rgba(56,189,248,0.8); }
+.split-handle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 32px; height: 32px; background: #ffffff; border: 2px solid #38bdf8; border-radius: 50%; z-index: 35; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #38bdf8; }
+html.dark .split-handle { background: #0f172a; }
+
+/* Real Engine Activity Animations */
+@keyframes pulse-border {
+    0% { border-color: rgba(14, 165, 233, 0.2); }
+    50% { border-color: rgba(14, 165, 233, 0.8); box-shadow: 0 0 15px rgba(14, 165, 233, 0.4); }
+    100% { border-color: rgba(14, 165, 233, 0.2); }
+}
+.engine-active {
+    animation: pulse-border 1.5s infinite ease-in-out;
+    pointer-events: none;
+    opacity: 0.8;
+}

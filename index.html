@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omni Engine | Ultimate Local File Processor</title>
+    
+    <meta name="description" content="Omni Engine: The fastest, secure, browser-based local file processor for image conversion and compression. No data ever leaves your computer.">
+    <meta name="keywords" content="local file processor, secure file converter, zero-server compressor, privacy-first file tools, local format converter">
+    <meta name="author" content="Omni Engine">
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Omni Engine",
+      "description": "A 100% client-side, privacy-first local file processor for converting and compressing files without server uploads.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { omni: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' } } } }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4 bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-50">
+
+    <header class="w-[95%] mx-auto max-w-7xl flex justify-between items-center mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+            <svg class="w-7 h-7 text-omni-500" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.992v4.99" />
+            </svg>
+            <h1 class="text-2xl font-black tracking-widest uppercase">Omni <span class="text-omni-500">Engine</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="https://github.com/KernelVoltage/omni-engine" target="_blank" class="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all text-slate-700 dark:text-slate-300 hover:text-omni-500" aria-label="GitHub Repository">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+            <button id="themeToggle" class="p-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all text-slate-700 dark:text-amber-400" aria-label="Toggle Dark Mode">
+                <svg id="iconMoon" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path></svg>
+                <svg id="iconSun" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-[95%] mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <section class="lg:col-span-6 flex flex-col gap-6" aria-label="Upload Section">
+            <h2 class="sr-only">Upload Files</h2>
+            <div class="flex gap-2 p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl w-full shadow-sm">
+                <button id="tabConvert" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase transition-all bg-omni-600 text-white shadow-md">Converter</button>
+                <button id="tabCompress" class="flex-1 py-3 rounded-lg text-xs font-bold uppercase transition-all text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">Compressor</button>
+            </div>
+
+            <div id="uploadContainer" class="w-full upload-box rounded-2xl p-6 min-h-[320px] flex flex-col items-center justify-center relative shadow-sm overflow-hidden">
+                <input type="file" id="fileInput" multiple class="hidden" aria-label="Upload files">
+                
+                <div id="dropZonePlaceholder" class="text-center cursor-pointer flex flex-col items-center justify-center w-full h-full">
+                    <div class="p-5 bg-white dark:bg-slate-800/50 rounded-full mb-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <svg class="w-12 h-12 text-omni-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Drop files or Click here</h3>
+                </div>
+
+                <div id="fileGridDisplay" class="hidden w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-max overflow-y-auto pr-2 pb-2"></div>
+            </div>
+            
+            <div id="statusBadge" class="hidden w-full p-3 rounded-lg border text-sm font-bold flex items-center justify-center gap-2 transition-all"></div>
+        </section>
+
+        <section class="lg:col-span-6 flex flex-col gap-6" aria-label="Processing Section">
+            <h2 class="sr-only">Process Files</h2>
+            <article id="dynamicDetailsBox" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hidden">
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between border-b border-slate-100 dark:border-slate-800/60 pb-2">
+                        <span class="text-slate-500 font-semibold">Active File:</span>
+                        <span id="dtlName" class="font-bold text-slate-800 dark:text-slate-200 truncate max-w-[200px]">None</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-100 dark:border-slate-800/60 pb-2">
+                        <span class="text-slate-500 font-semibold">Native Format:</span>
+                        <span id="dtlFormat" class="font-black text-omni-600 dark:text-omni-400 px-2 py-0.5 bg-omni-50 dark:bg-omni-900/20 rounded">---</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-100 dark:border-slate-800/60 pb-2">
+                        <span class="text-slate-500 font-semibold">Original Weight:</span>
+                        <span id="dtlSize" class="font-bold text-slate-800 dark:text-slate-200">0 KB</span>
+                    </div>
+                    <div id="dtlEstRow" class="flex justify-between pb-1">
+                        <span class="text-slate-500 font-semibold">Estimated Output Size:</span>
+                        <span id="dtlEstSize" class="font-bold text-green-500 dark:text-green-400">Working...</span>
+                    </div>
+                    <div id="dtlTotalRow" class="hidden justify-between border-t border-slate-100 dark:border-slate-800/60 pt-2 mt-2">
+                        <span class="text-slate-500 font-semibold">Queue Summary:</span>
+                        <span id="dtlTotalSize" class="font-bold text-omni-600 dark:text-omni-400">0 KB</span>
+                    </div>
+                </div>
+            </article>
+
+            <div id="panelConvert" class="hidden flex-col gap-4">
+                <div id="formatGridWrapper" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl p-5 transition-all">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-omni-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Target Matrix
+                    </h3>
+                    <div id="formatGrid" class="grid grid-cols-4 gap-2"></div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl p-6 flex flex-col gap-5">
+                    <label id="exifToggleLabel" class="flex items-start justify-between gap-4 cursor-pointer select-none">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Remove Hidden Data (GPS/Camera Info)</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Erase EXIF data on all compatible files automatically. <i>*Real binary erasure.</i></span>
+                        </div>
+                        <div class="switch-toggle">
+                            <input type="checkbox" id="exifToggle" checked>
+                            <span class="slider-round"></span>
+                        </div>
+                    </label>
+                </div>
+
+                <button id="btnRunConvert" class="w-full bg-omni-600 hover:bg-omni-500 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-lg shadow-omni-500/30 relative overflow-hidden">
+                    <span class="relative z-10">Convert Queue</span>
+                </button>
+            </div>
+
+            <div id="panelCompress" class="hidden flex-col gap-4">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl p-6">
+                    
+                    <div class="mb-5 border-b border-slate-100 dark:border-slate-800 pb-5">
+                         <h3 class="text-xs font-black uppercase text-slate-800 dark:text-white mb-2">Exact-Size Target Engine</h3>
+                         <div class="flex flex-col gap-2">
+                             <select id="targetDropdown" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded p-2 text-xs font-bold text-slate-800 dark:text-white outline-none focus:border-omni-500">
+                                 <option value="none">No Exact Target (Use Slider)</option>
+                                 <option value="20">Under 20KB</option>
+                                 <option value="50">Under 50KB</option>
+                                 <option value="100">Under 100KB</option>
+                                 <option value="custom">Custom Size...</option>
+                             </select>
+                             
+                             <div id="customTargetDiv" class="hidden border border-slate-200 dark:border-slate-700 rounded overflow-hidden bg-slate-50 dark:bg-slate-900 focus-within:border-omni-500">
+                                 <input type="number" id="customTargetInput" placeholder="Enter target in KB" class="w-full bg-transparent text-xs px-2 outline-none text-slate-800 dark:text-white font-bold text-center h-8">
+                                 <span class="text-[10px] font-bold text-slate-400 py-2 pr-2">KB</span>
+                             </div>
+                         </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-sm font-black uppercase text-slate-800 dark:text-white mb-0.5">Deflation Scale</h3>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">Dynamic Real-Time Engine Rendering</p>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                            <input type="number" id="compNum" min="1" max="100" value="15" class="w-12 bg-transparent text-center text-sm font-black text-omni-500 outline-none">
+                        </div>
+                    </div>
+                    
+                    <input type="range" id="compSlider" min="1" max="100" value="15">
+                    
+                    <div class="flex justify-between text-[10px] font-bold uppercase text-slate-400 mt-3 tracking-wider">
+                        <span>Best Quality (1)</span>
+                        <span>Smallest Size (100)</span>
+                    </div>
+
+                    <div id="viewerWrapper" class="mt-6 hidden flex-col gap-4">
+                        <div class="flex gap-2">
+                            <div class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-2.5 text-center">
+                                <div class="text-[10px] font-black uppercase text-slate-500">Original</div>
+                                <div id="lblOrigSize" class="text-sm font-bold text-slate-800 dark:text-white mt-0.5">0 KB</div>
+                            </div>
+                            <div class="flex-1 bg-omni-50 dark:bg-omni-900/20 border border-omni-200 dark:border-omni-900/40 rounded-lg p-2.5 text-center">
+                                <div class="text-[10px] font-black uppercase text-omni-600 dark:text-omni-400">Real-Time Canvas Output</div>
+                                <div id="lblOptSize" class="text-sm font-bold text-omni-600 dark:text-omni-400 mt-0.5">0 KB</div>
+                            </div>
+                        </div>
+
+                        <div class="comparison-container bg-slate-100 dark:bg-slate-950 shadow-inner">
+                            <span class="absolute top-2 left-2 z-30 bg-black/70 px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider text-white">Before</span>
+                            <span class="absolute top-2 right-2 z-30 bg-omni-600/90 px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider text-white">After</span>
+                            
+                            <img id="imgBefore" class="comp-img img-before" alt="">
+                            <img id="imgAfter" class="comp-img img-after" alt="">
+                            
+                            <div id="splitLine" class="split-line"></div>
+                            <div id="splitHandle" class="split-handle">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l-3 3 3 3m8-6l3 3-3 3M5 12h14"></path></svg>
+                            </div>
+                            
+                            <input type="range" id="splitControl" min="0" max="100" value="50" class="split-overlay">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnRunCompress" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-lg shadow-emerald-500/30">
+                    Compress Data Blocks
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <footer class="w-full text-center py-6 mt-8 border-t border-slate-200 dark:border-slate-800">
+        <p class="text-sm text-slate-500 font-medium">
+            Built with Omni Engine | 100% Client Side 
+            <span class="text-omni-500 font-bold transition-colors">Privacy Secured</span>
+        </p>
+    </footer>
+
+    <script src="engine.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
