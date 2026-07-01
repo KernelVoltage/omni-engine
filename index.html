@@ -4,12 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omni Engine | Ultimate Local File Processor</title>
-    <meta name="google-site-verification" content="sl-pLxY3OMqFlb4_ZGMy7THx8DTngqvrwmNEYd9i59I" />
+     <meta name="google-site-verification" content="sl-pLxY3OMqFlb4_ZGMy7THx8DTngqvrwmNEYd9i59I" />
     <meta name="description" content="Omni Engine: The fastest, secure, browser-based local file processor for image conversion and compression. No data ever leaves your computer.">
     <meta name="keywords" content="local file processor, secure file converter, zero-server compressor, privacy-first file tools, local format converter">
     <meta name="author" content="Omni Engine">
     <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#0ea5e9">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com blob: data:;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
     
     <script type="application/ld+json">
     {
@@ -152,7 +155,7 @@
                              </select>
                              
                              <div id="customTargetDiv" class="hidden border border-slate-200 dark:border-slate-700 rounded overflow-hidden bg-slate-50 dark:bg-slate-900 focus-within:border-omni-500">
-                                 <input type="number" id="customTargetInput" placeholder="Enter target in KB" class="w-full bg-transparent text-xs px-2 outline-none text-slate-800 dark:text-white font-bold text-center h-8">
+                                 <input type="number" id="customTargetInput" min="1" placeholder="Enter target in KB" class="w-full bg-transparent text-xs px-2 outline-none text-slate-800 dark:text-white font-bold text-center h-8">
                                  <span class="text-[10px] font-bold text-slate-400 py-2 pr-2">KB</span>
                              </div>
                          </div>
