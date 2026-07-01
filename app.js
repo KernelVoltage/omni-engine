@@ -124,7 +124,6 @@ function handleFiles(newFiles) {
     if(!newFiles.length) return;
     const targetArray = getActiveFiles();
     
-    // Website Stability Limit (15 Max Files)
     let availableSlots = 15 - targetArray.length;
     if (availableSlots <= 0) {
         showStatus("Maximum limit reached. Only 15 files allowed.", "error");
@@ -179,7 +178,6 @@ function removeFileAtIndex(id, index) {
     updateFileGridUI(); renderPanels(); updateDetailsBox();
 }
 
-// Function to handle Real-time Card Status
 function setCardStatus(id, state) {
     const overlay = $(`status-overlay-${id}`);
     const icon = $(`status-icon-${id}`);
@@ -291,7 +289,9 @@ function buildGrid() {
         btn.className = "fmt-btn p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:border-omni-500 hover:text-omni-500 dark:hover:text-omni-400 text-slate-600 dark:text-slate-300 text-xs font-black transition-all text-center";
         
         btn.onclick = () => {
-            activeFile.settings.format = f;
+            // FIX: Apply the selected format to ALL uploaded files globally!
+            getActiveFiles().forEach(file => file.settings.format = f);
+            
             document.querySelectorAll('.fmt-btn').forEach(b => {
                 b.classList.remove('border-omni-500', 'text-omni-600', 'bg-omni-50', 'dark:bg-omni-950/40', 'dark:text-omni-400');
                 b.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-600', 'dark:border-slate-800', 'dark:bg-slate-900', 'dark:text-slate-300');
@@ -306,16 +306,15 @@ function buildGrid() {
 
     if(!selectedAny) {
         const fallbackBtn = UI.grid.querySelector('.fmt-btn');
-        if(fallbackBtn) fallbackBtn.click(); else activeFile.settings.format = '';
+        if(fallbackBtn) fallbackBtn.click(); else getActiveFiles().forEach(file => file.settings.format = '');
     }
 }
 
+// FIX: EXIF Toggle Global Sync
 UI.exifToggle.onchange = (e) => {
-    const act = getActiveFileObj();
-    if(act) act.settings.stripMeta = e.target.checked;
+    getActiveFiles().forEach(file => file.settings.stripMeta = e.target.checked);
 }
 
-// Convert Queue -> Processing Logic with Status Updates
 UI.btnConv.onclick = async () => {
     if(STATE.isProcessing) return;
     const files = getActiveFiles();
@@ -330,7 +329,7 @@ UI.btnConv.onclick = async () => {
         if(files.length === 1) {
             const f = files[0];
             setCardStatus(f.id, 'processing');
-            const ext = f.settings.format;
+            const ext = f.settings.format || (getActiveFileObj() ? getActiveFileObj().settings.format : '');
             let outBlob = f.nativeFile;
             let finalName = f.name;
 
@@ -345,7 +344,8 @@ UI.btnConv.onclick = async () => {
             for(let i = 0; i < files.length; i++) {
                 const f = files[i];
                 setCardStatus(f.id, 'processing');
-                const ext = f.settings.format;
+                // FIX: Fallback applied dynamically ensuring no file is left out
+                const ext = f.settings.format || (getActiveFileObj() ? getActiveFileObj().settings.format : '');
                 let outBlob = f.nativeFile;
                 let finalName = f.name;
 
@@ -381,25 +381,25 @@ function toggleCustomTargetDiv() {
     else UI.cTargetDiv.classList.add('hidden');
 }
 
-// SYNC FIX: Dropdown, Custom Input & Slider
+// FIX: Sync for Dropdown -> Applies to Entire Batch
 UI.tDrop.addEventListener('change', (e) => {
-    const actObj = getActiveFileObj();
-    if(!actObj) return;
-
     if (e.target.value === 'none') {
-        actObj.settings.exactTargetKB = null;
+        getActiveFiles().forEach(f => f.settings.exactTargetKB = null);
         UI.cTargetDiv.classList.add('hidden');
     } else if (e.target.value === 'custom') {
         UI.cTargetDiv.classList.remove('hidden');
         let val = UI.cTarget.value ? parseInt(UI.cTarget.value) : null;
-        actObj.settings.exactTargetKB = val;
+        getActiveFiles().forEach(f => f.settings.exactTargetKB = val);
     } else {
         UI.cTargetDiv.classList.add('hidden');
         const val = parseInt(e.target.value);
-        actObj.settings.exactTargetKB = val;
-        
         let visualSliderVal = val <= 20 ? 80 : (val <= 50 ? 60 : 40);
-        actObj.settings.quality = visualSliderVal;
+        
+        getActiveFiles().forEach(f => {
+            f.settings.exactTargetKB = val;
+            f.settings.quality = visualSliderVal;
+        });
+
         UI.sldRange.value = visualSliderVal;
         UI.sldNum.value = visualSliderVal;
         updateSliderVisual();
@@ -407,14 +407,13 @@ UI.tDrop.addEventListener('change', (e) => {
     triggerLivePreview();
 });
 
+// FIX: Sync Custom Size Input -> Applies to Entire Batch Perfectly
 UI.cTarget.addEventListener('input', (e) => {
-    const actObj = getActiveFileObj();
-    if(!actObj) return;
     let val = parseInt(e.target.value);
-    if(e.target.value && !isNaN(val)) {
-        actObj.settings.exactTargetKB = val;
+    if(e.target.value && !isNaN(val) && val > 0) {
+        getActiveFiles().forEach(f => f.settings.exactTargetKB = val);
     } else {
-        actObj.settings.exactTargetKB = null;
+        getActiveFiles().forEach(f => f.settings.exactTargetKB = null);
     }
     triggerLivePreview();
 });
@@ -428,11 +427,12 @@ function updateSliderVisual() {
 }
 
 function syncSliderToData(val) {
-    const actObj = getActiveFileObj();
-    if(actObj) {
-        actObj.settings.quality = val;
-        actObj.settings.exactTargetKB = null; 
-    }
+    // FIX: Applies Quality to ALL files globally!
+    getActiveFiles().forEach(file => {
+        file.settings.quality = val;
+        file.settings.exactTargetKB = null; 
+    });
+    
     UI.tDrop.value = "none"; 
     toggleCustomTargetDiv();
     
@@ -471,7 +471,7 @@ function triggerLivePreview() {
         if(STATE.imgOrigUrl && STATE.imgOrigUrl !== activeFile.thumbnailUrl) URL.revokeObjectURL(STATE.imgOptUrl);
 
         let testBlob = null;
-        let targetFormat = activeFile.extension === 'PNG' ? 'WEBP' : activeFile.extension;
+        let targetFormat = activeFile.extension; // FIX: Keep Native Format
         
         if(activeFile.settings.exactTargetKB) {
             testBlob = await binarySearchCompress(activeFile, activeFile.settings.exactTargetKB);
@@ -504,7 +504,6 @@ UI.sCtrl.oninput = e => {
     UI.sHand.style.left = `${v}%`;
 };
 
-// Compress Queue -> Processing Logic with Status Updates
 UI.btnComp.onclick = async () => {
     if(STATE.isProcessing) return;
     const files = getActiveFiles();
@@ -527,11 +526,11 @@ UI.btnComp.onclick = async () => {
                     outBlob = await binarySearchCompress(f, f.settings.exactTargetKB);
                 } else {
                     let imgQuality = Math.max(0.1, 1.0 - (f.settings.quality / 110));
-                    let targetExt = f.extension === 'PNG' ? 'WEBP' : f.extension;
+                    let targetExt = f.extension; // FIX: Keeps Native Format!
                     outBlob = await processImageCanvas(f, targetExt, imgQuality, f.settings.stripMeta);
                 }
                 if(!outBlob) outBlob = f.nativeFile;
-                finalName = `${f.name.split('.')[0]}_min.${f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase()}`;
+                finalName = `${f.name.split('.')[0]}_min.${f.extension.toLowerCase()}`;
             }
             setCardStatus(f.id, 'done');
             download(outBlob, finalName);
@@ -548,11 +547,11 @@ UI.btnComp.onclick = async () => {
                         outBlob = await binarySearchCompress(f, f.settings.exactTargetKB);
                     } else {
                         let imgQuality = Math.max(0.1, 1.0 - (f.settings.quality / 110));
-                        let targetExt = f.extension === 'PNG' ? 'WEBP' : f.extension;
+                        let targetExt = f.extension; // FIX: Native Format Only
                         outBlob = await processImageCanvas(f, targetExt, imgQuality, f.settings.stripMeta);
                     }
                     if(!outBlob) outBlob = f.nativeFile;
-                    finalName = f.name.split('.')[0] + "_min." + (f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase());
+                    finalName = f.name.split('.')[0] + "_min." + f.extension.toLowerCase(); // FIX: Extension Name
                 }
                 zip.file(finalName, outBlob);
                 setCardStatus(f.id, 'done');
