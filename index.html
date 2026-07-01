@@ -8,6 +8,8 @@
     <meta name="description" content="Omni Engine: The fastest, secure, browser-based local file processor for image conversion and compression. No data ever leaves your computer.">
     <meta name="keywords" content="local file processor, secure file converter, zero-server compressor, privacy-first file tools, local format converter">
     <meta name="author" content="Omni Engine">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     
     <script type="application/ld+json">
     {
@@ -66,13 +68,13 @@
             </div>
 
             <div id="uploadContainer" class="w-full upload-box rounded-2xl p-6 min-h-[320px] flex flex-col items-center justify-center relative shadow-sm overflow-hidden">
-                <input type="file" id="fileInput" multiple class="hidden" aria-label="Upload files">
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden" aria-label="Upload files">
                 
                 <div id="dropZonePlaceholder" class="text-center cursor-pointer flex flex-col items-center justify-center w-full h-full">
                     <div class="p-5 bg-white dark:bg-slate-800/50 rounded-full mb-4 shadow-sm border border-slate-200 dark:border-slate-700">
                         <svg class="w-12 h-12 text-omni-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Drop files or Click here</h3>
+                    <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Drop images or Click here (Max 15)</h3>
                 </div>
 
                 <div id="fileGridDisplay" class="hidden w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-max overflow-y-auto pr-2 pb-2"></div>
