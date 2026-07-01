@@ -15,7 +15,6 @@ const STATE = {
     imgOrigUrl: null,
     imgOptUrl: null,
     matrix: {
-        
         image: ["PNG", "JPG", "WEBP", "AVIF"]
     },
     isProcessing: false
@@ -90,7 +89,6 @@ async function processImageCanvas(fileObj, targetFormat, quality, stripMeta = tr
                     if(stripMeta && mime === 'image/jpeg') {
                         finalBlob = await stripExifFromBlob(blob);
                     }
-                    // Protection: Ensure size doesn't increase during pure compression mode
                     if (STATE.mode === 'compress' && finalBlob.size > fileObj.size) {
                         resolve(fileObj.nativeFile);
                     } else {
@@ -108,7 +106,8 @@ async function processImageCanvas(fileObj, targetFormat, quality, stripMeta = tr
 }
 
 async function binarySearchCompress(fileObj, targetKB) {
-    let targetFormat = fileObj.extension === 'PNG' ? 'WEBP' : fileObj.extension; 
+    // FIX: Removed Forced WEBP conversion. Keep native format.
+    let targetFormat = fileObj.extension; 
     let minQ = 0.05;
     let maxQ = 1.0;
     let bestBlob = null;
