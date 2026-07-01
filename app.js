@@ -89,17 +89,14 @@ function renderPanels() {
     if (STATE.mode === 'convert') {
         UI.pConv.classList.remove('hidden'); UI.pConv.classList.add('flex');
         UI.pComp.classList.add('hidden'); UI.pComp.classList.remove('flex');
-        UI.dtlEstRow.classList.add('hidden'); // Hide estimate in converter
-        if(actObj) {
-            UI.exifToggle.checked = actObj.settings.stripMeta;
-        }
+        UI.dtlEstRow.classList.add('hidden'); 
+        if(actObj) UI.exifToggle.checked = actObj.settings.stripMeta;
         buildGrid();
     } else {
         UI.pComp.classList.remove('hidden'); UI.pComp.classList.add('flex');
         UI.pConv.classList.add('hidden'); UI.pConv.classList.remove('flex');
-        UI.dtlEstRow.classList.remove('hidden'); // Show estimate in compressor
+        UI.dtlEstRow.classList.remove('hidden'); 
         if(actObj) {
-            // Restore active file settings into UI
             UI.sldRange.value = actObj.settings.quality;
             UI.sldNum.value = actObj.settings.quality;
             
@@ -126,7 +123,20 @@ UI.fileIn.onchange = e => { handleFiles(e.target.files); e.target.value = ''; };
 function handleFiles(newFiles) {
     if(!newFiles.length) return;
     const targetArray = getActiveFiles();
-    Array.from(newFiles).forEach(nf => {
+    
+    // Website Stability Limit (15 Max Files)
+    let availableSlots = 15 - targetArray.length;
+    if (availableSlots <= 0) {
+        showStatus("Maximum limit reached. Only 15 files allowed.", "error");
+        return;
+    }
+
+    let filesToAdd = Array.from(newFiles).slice(0, availableSlots);
+    if (newFiles.length > availableSlots) {
+        showStatus(`Adding only ${availableSlots} files to maintain stability.`, "error");
+    }
+
+    filesToAdd.forEach(nf => {
         if(!targetArray.some(f => f.name === nf.name && f.size === nf.size)) {
             const ext = getExt(nf.name);
             const type = resolveFileType(ext);
@@ -138,7 +148,6 @@ function handleFiles(newFiles) {
                 extension: ext,
                 type: type,
                 thumbnailUrl: isImg(type) ? URL.createObjectURL(nf) : null,
-                // PER-FILE SETTINGS (Anti-Khichdi)
                 settings: {
                     format: '',
                     quality: 15,
@@ -170,6 +179,28 @@ function removeFileAtIndex(id, index) {
     updateFileGridUI(); renderPanels(); updateDetailsBox();
 }
 
+// Function to handle Real-time Card Status
+function setCardStatus(id, state) {
+    const overlay = $(`status-overlay-${id}`);
+    const icon = $(`status-icon-${id}`);
+    const text = $(`status-text-${id}`);
+    if(!overlay) return;
+    
+    if(state === 'processing') {
+        overlay.classList.add('active');
+        icon.innerHTML = `<svg class="animate-spin h-5 w-5 text-omni-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        text.innerText = "Processing...";
+        text.className = "status-text text-omni-500";
+    } else if(state === 'done') {
+        overlay.classList.add('active');
+        icon.innerHTML = `<svg class="h-6 w-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`;
+        text.innerText = "Done!";
+        text.className = "status-text text-emerald-500";
+    } else {
+        overlay.classList.remove('active');
+    }
+}
+
 function updateFileGridUI() {
     UI.gridDisp.innerHTML = "";
     const files = getActiveFiles();
@@ -193,10 +224,14 @@ function updateFileGridUI() {
             : `<svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
         
         card.innerHTML = `
+            <div id="status-overlay-${f.id}" class="card-status-overlay">
+                <div id="status-icon-${f.id}"></div>
+                <span id="status-text-${f.id}" class="status-text"></span>
+            </div>
             <button class="absolute top-2 right-2 text-slate-400 hover:text-red-500 font-bold w-5 h-5 flex items-center justify-center bg-slate-50 dark:bg-slate-950 rounded-full border border-slate-200 dark:border-slate-800 text-xs z-30" aria-label="Remove File" onclick="event.stopPropagation(); removeFileAtIndex('${f.id}', ${idx})">&times;</button>
             <div class="flex items-center gap-3">
                 <div class="shrink-0 rounded bg-slate-50 dark:bg-slate-950 p-1 border border-slate-100 dark:border-slate-800">${iconDisplay}</div>
-                <div class="flex flex-col overflow-hidden">
+                <div class="flex flex-col overflow-hidden z-10 relative">
                     <span class="text-xs font-bold text-slate-800 dark:text-white truncate">${safeName}</span>
                     <span class="text-[10px] font-mono tracking-wider text-slate-500 uppercase">${formatBytes(f.size)} &bull; ${f.extension}</span>
                 </div>
@@ -205,11 +240,13 @@ function updateFileGridUI() {
         UI.gridDisp.appendChild(card);
     });
 
-    const addCard = document.createElement('div');
-    addCard.className = "border-2 dashed border-slate-200 dark:border-slate-800 hover:border-omni-500 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl flex flex-col items-center justify-center cursor-pointer min-h-[90px] transition-all group";
-    addCard.innerHTML = `<span class="text-[11px] font-black tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-omni-500 uppercase">+ ADD MORE</span>`;
-    addCard.onclick = (e) => { e.stopPropagation(); UI.fileIn.click(); };
-    UI.gridDisp.appendChild(addCard);
+    if (files.length < 15) {
+        const addCard = document.createElement('div');
+        addCard.className = "border-2 dashed border-slate-200 dark:border-slate-800 hover:border-omni-500 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl flex flex-col items-center justify-center cursor-pointer min-h-[90px] transition-all group";
+        addCard.innerHTML = `<span class="text-[11px] font-black tracking-widest text-slate-400 dark:text-slate-500 group-hover:text-omni-500 uppercase">+ ADD MORE</span>`;
+        addCard.onclick = (e) => { e.stopPropagation(); UI.fileIn.click(); };
+        UI.gridDisp.appendChild(addCard);
+    }
 }
 
 function updateDetailsBox() {
@@ -237,8 +274,14 @@ function buildGrid() {
     const activeFile = getActiveFileObj();
     if (!activeFile) return;
 
+    if (!isImg(activeFile.type)) {
+        UI.fmtWrap.classList.add('hidden'); 
+        return;
+    }
+    UI.fmtWrap.classList.remove('hidden');
+
     const baseExt = activeFile.extension.toUpperCase();
-    const allowedFormats = STATE.matrix[activeFile.type] || ["BIN"];
+    const allowedFormats = STATE.matrix.image || [];
     
     let selectedAny = false;
     allowedFormats.forEach(f => {
@@ -272,6 +315,7 @@ UI.exifToggle.onchange = (e) => {
     if(act) act.settings.stripMeta = e.target.checked;
 }
 
+// Convert Queue -> Processing Logic with Status Updates
 UI.btnConv.onclick = async () => {
     if(STATE.isProcessing) return;
     const files = getActiveFiles();
@@ -285,67 +329,93 @@ UI.btnConv.onclick = async () => {
     try {
         if(files.length === 1) {
             const f = files[0];
+            setCardStatus(f.id, 'processing');
             const ext = f.settings.format;
-            if(!ext) { throw new Error("No format selected"); }
-            
             let outBlob = f.nativeFile;
-            if(isImg(f.type) || ["PNG","JPG","JPEG","WEBP","AVIF"].includes(ext)) {
-                outBlob = await processImageCanvas(f, ext, 0.92, f.settings.stripMeta);
+            let finalName = f.name;
+
+            if(isImg(f.type) && ext) {
+                outBlob = await processImageCanvas(f, ext, 0.92, f.settings.stripMeta) || f.nativeFile;
+                finalName = `${f.name.split('.')[0]}_omni.${ext.toLowerCase()}`;
             }
-            if (outBlob) download(outBlob, `${f.name.split('.')[0]}_omni.${ext.toLowerCase()}`);
-            else throw new Error("Canvas Failed");
+            setCardStatus(f.id, 'done');
+            download(outBlob, finalName);
         } else {
             const zip = new JSZip();
             for(let i = 0; i < files.length; i++) {
                 const f = files[i];
+                setCardStatus(f.id, 'processing');
                 const ext = f.settings.format;
-                if(!ext) continue;
                 let outBlob = f.nativeFile;
-                if(isImg(f.type) || ["PNG","JPG","JPEG","WEBP","AVIF"].includes(ext)) {
-                    outBlob = await processImageCanvas(f, ext, 0.92, f.settings.stripMeta);
+                let finalName = f.name;
+
+                if(isImg(f.type) && ext) {
+                    outBlob = await processImageCanvas(f, ext, 0.92, f.settings.stripMeta) || f.nativeFile;
+                    finalName = `${f.name.split('.')[0]}_omni.${ext.toLowerCase()}`;
                 }
-                if (outBlob) zip.file(`${f.name.split('.')[0]}_omni.${ext.toLowerCase()}`, outBlob);
+                zip.file(finalName, outBlob);
+                setCardStatus(f.id, 'done');
             }
             if (Object.keys(zip.files).length > 0) {
                 const zb = await zip.generateAsync({type: "blob", compression: "STORE"});
                 download(zb, "OmniEngine_Converted_Batch.zip");
             } else {
-                throw new Error("No files processed successfully.");
+                throw new Error("No files to zip");
             }
         }
         showStatus("Conversion Successful!", "success");
     } catch(err) {
         console.error(err);
-        showStatus("Format not selected or error encountered.", "error");
+        showStatus("Error encountered.", "error");
     }
     
     STATE.isProcessing = false;
     UI.btnConv.innerText = origTxt;
     UI.btnConv.classList.remove('engine-active');
+    
+    setTimeout(() => { files.forEach(f => setCardStatus(f.id, 'idle')); }, 2500);
 };
 
-// --- SYNC & EXACT TARGET LOGIC ---
 function toggleCustomTargetDiv() {
     if(UI.tDrop.value === 'custom') UI.cTargetDiv.classList.remove('hidden');
     else UI.cTargetDiv.classList.add('hidden');
 }
 
+// SYNC FIX: Dropdown, Custom Input & Slider
 UI.tDrop.addEventListener('change', (e) => {
-    toggleCustomTargetDiv();
     const actObj = getActiveFileObj();
     if(!actObj) return;
-    
-    if(e.target.value === 'none') actObj.settings.exactTargetKB = null;
-    else if(e.target.value === 'custom') actObj.settings.exactTargetKB = UI.cTarget.value ? parseInt(UI.cTarget.value) : null;
-    else actObj.settings.exactTargetKB = parseInt(e.target.value);
+
+    if (e.target.value === 'none') {
+        actObj.settings.exactTargetKB = null;
+        UI.cTargetDiv.classList.add('hidden');
+    } else if (e.target.value === 'custom') {
+        UI.cTargetDiv.classList.remove('hidden');
+        let val = UI.cTarget.value ? parseInt(UI.cTarget.value) : null;
+        actObj.settings.exactTargetKB = val;
+    } else {
+        UI.cTargetDiv.classList.add('hidden');
+        const val = parseInt(e.target.value);
+        actObj.settings.exactTargetKB = val;
+        
+        let visualSliderVal = val <= 20 ? 80 : (val <= 50 ? 60 : 40);
+        actObj.settings.quality = visualSliderVal;
+        UI.sldRange.value = visualSliderVal;
+        UI.sldNum.value = visualSliderVal;
+        updateSliderVisual();
+    }
     triggerLivePreview();
 });
 
 UI.cTarget.addEventListener('input', (e) => {
     const actObj = getActiveFileObj();
     if(!actObj) return;
-    if(e.target.value && !isNaN(e.target.value)) actObj.settings.exactTargetKB = parseInt(e.target.value);
-    else actObj.settings.exactTargetKB = null;
+    let val = parseInt(e.target.value);
+    if(e.target.value && !isNaN(val)) {
+        actObj.settings.exactTargetKB = val;
+    } else {
+        actObj.settings.exactTargetKB = null;
+    }
     triggerLivePreview();
 });
 
@@ -361,7 +431,7 @@ function syncSliderToData(val) {
     const actObj = getActiveFileObj();
     if(actObj) {
         actObj.settings.quality = val;
-        actObj.settings.exactTargetKB = null; // moving slider turns off exact target
+        actObj.settings.exactTargetKB = null; 
     }
     UI.tDrop.value = "none"; 
     toggleCustomTargetDiv();
@@ -381,21 +451,20 @@ UI.sldNum.addEventListener('input', (e) => {
 
 function triggerLivePreview() {
     clearTimeout(debounceTimer);
+    const activeFile = getActiveFileObj();
+    if(!activeFile) return;
+
+    if(!isImg(activeFile.type)) {
+        UI.vWrap.classList.add('hidden');
+        UI.dtlEstSize.innerText = formatBytes(activeFile.size);
+        UI.dtlEstSize.classList.remove('animate-pulse');
+        return;
+    }
+
     UI.dtlEstSize.innerText = "Working...";
     UI.dtlEstSize.classList.add('animate-pulse');
     
     debounceTimer = setTimeout(async () => {
-        const files = getActiveFiles();
-        if(!files.length) return;
-        const activeFile = getActiveFileObj();
-        
-        if(!activeFile || !isImg(activeFile.type)) {
-            UI.vWrap.classList.add('hidden');
-            UI.dtlEstSize.innerText = "Ready";
-            UI.dtlEstSize.classList.remove('animate-pulse');
-            return;
-        }
-        
         UI.vWrap.classList.remove('hidden');
         UI.lOrig.innerText = formatBytes(activeFile.size);
 
@@ -435,6 +504,7 @@ UI.sCtrl.oninput = e => {
     UI.sHand.style.left = `${v}%`;
 };
 
+// Compress Queue -> Processing Logic with Status Updates
 UI.btnComp.onclick = async () => {
     if(STATE.isProcessing) return;
     const files = getActiveFiles();
@@ -448,7 +518,9 @@ UI.btnComp.onclick = async () => {
     try {
         if(files.length === 1) {
             const f = files[0];
+            setCardStatus(f.id, 'processing');
             let outBlob = f.nativeFile;
+            let finalName = f.name;
             
             if(isImg(f.type)) {
                 if(f.settings.exactTargetKB) {
@@ -458,13 +530,19 @@ UI.btnComp.onclick = async () => {
                     let targetExt = f.extension === 'PNG' ? 'WEBP' : f.extension;
                     outBlob = await processImageCanvas(f, targetExt, imgQuality, f.settings.stripMeta);
                 }
+                if(!outBlob) outBlob = f.nativeFile;
+                finalName = `${f.name.split('.')[0]}_min.${f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase()}`;
             }
-            if(outBlob) download(outBlob, `${f.name.split('.')[0]}_min.${f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase()}`);
+            setCardStatus(f.id, 'done');
+            download(outBlob, finalName);
         } else {
             const zip = new JSZip();
             for(let i = 0; i < files.length; i++) {
                 const f = files[i];
+                setCardStatus(f.id, 'processing');
                 let outBlob = f.nativeFile;
+                let finalName = f.name;
+
                 if(isImg(f.type)) {
                     if(f.settings.exactTargetKB) {
                         outBlob = await binarySearchCompress(f, f.settings.exactTargetKB);
@@ -473,11 +551,14 @@ UI.btnComp.onclick = async () => {
                         let targetExt = f.extension === 'PNG' ? 'WEBP' : f.extension;
                         outBlob = await processImageCanvas(f, targetExt, imgQuality, f.settings.stripMeta);
                     }
+                    if(!outBlob) outBlob = f.nativeFile;
+                    finalName = f.name.split('.')[0] + "_min." + (f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase());
                 }
-                if (outBlob) zip.file(f.name.split('.')[0] + "_min." + (f.extension === 'PNG' ? 'webp' : f.extension.toLowerCase()), outBlob);
+                zip.file(finalName, outBlob);
+                setCardStatus(f.id, 'done');
             }
+            
             if (Object.keys(zip.files).length > 0) {
-                // Defaulting to active file slider level for zip compression
                 let compLvl = getActiveFileObj() ? getActiveFileObj().settings.quality : 15;
                 let zipLevel = Math.max(1, Math.ceil((compLvl / 100) * 9));
                 const zBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE", compressionOptions: { level: zipLevel } });
@@ -493,4 +574,6 @@ UI.btnComp.onclick = async () => {
     STATE.isProcessing = false;
     UI.btnComp.innerText = origTxt;
     UI.btnComp.classList.remove('engine-active');
+    
+    setTimeout(() => { files.forEach(f => setCardStatus(f.id, 'idle')); }, 2500);
 };
