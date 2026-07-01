@@ -15,15 +15,12 @@ const STATE = {
     imgOrigUrl: null,
     imgOptUrl: null,
     matrix: {
-        image: ["PNG", "JPG", "WEBP", "AVIF"],
-        document: ["PDF", "TXT"],
-        archive: ["ZIP"],
-        media: ["MP3", "MP4"]
+        
+        image: ["PNG", "JPG", "WEBP", "AVIF"]
     },
     isProcessing: false
 };
 
-// Global formatters and resolvers
 const formatBytes = b => {
     if(b === 0) return '0 B';
     const k = 1024, s = ['B','KB','MB','GB'], i = Math.floor(Math.log(b)/Math.log(k));
@@ -33,17 +30,10 @@ const getExt = n => n.split('.').pop().toUpperCase();
 const isImg = type => type === 'image';
 const resolveFileType = (ext) => {
     const uExt = ext.toUpperCase();
-    if (STATE.matrix.image.includes(uExt) || uExt === 'JPEG') return 'image';
-    if (STATE.matrix.document.includes(uExt)) return 'document';
-    if (STATE.matrix.archive.includes(uExt)) return 'archive';
-    return 'binary';
+    if (STATE.matrix.image && STATE.matrix.image.includes(uExt) || uExt === 'JPEG') return 'image';
+    return 'document'; 
 };
 
-/**
- * ==========================================
- * EXIF & METADATA STRIPPER (REAL BINARY MANIPULATION)
- * ==========================================
- */
 async function stripExifFromBlob(blob) {
     if (blob.type !== 'image/jpeg') return blob; 
     const arrayBuffer = await blob.arrayBuffer();
@@ -61,7 +51,7 @@ async function stripExifFromBlob(blob) {
         const length = dataView.getUint16(offset + 2);
         
         if (marker === 0xFFE1 || marker === 0xFFE2) {
-            offset += 2 + length; // Erasing Meta
+            offset += 2 + length; 
         } else {
             chunks.push(new Uint8Array(arrayBuffer, offset, 2 + length));
             offset += 2 + length;
@@ -74,11 +64,6 @@ async function stripExifFromBlob(blob) {
     return new Blob(chunks, { type: 'image/jpeg' });
 }
 
-/**
- * ==========================================
- * REAL-TIME CANVAS PROCESSING ENGINE
- * ==========================================
- */
 async function processImageCanvas(fileObj, targetFormat, quality, stripMeta = true) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -105,7 +90,12 @@ async function processImageCanvas(fileObj, targetFormat, quality, stripMeta = tr
                     if(stripMeta && mime === 'image/jpeg') {
                         finalBlob = await stripExifFromBlob(blob);
                     }
-                    resolve(finalBlob);
+                    // Protection: Ensure size doesn't increase during pure compression mode
+                    if (STATE.mode === 'compress' && finalBlob.size > fileObj.size) {
+                        resolve(fileObj.nativeFile);
+                    } else {
+                        resolve(finalBlob);
+                    }
                 }, mime, quality);
             };
             img.onerror = () => resolve(null);
@@ -117,11 +107,6 @@ async function processImageCanvas(fileObj, targetFormat, quality, stripMeta = tr
     });
 }
 
-/**
- * ==========================================
- * BINARY SEARCH EXACT-TARGET ENGINE
- * ==========================================
- */
 async function binarySearchCompress(fileObj, targetKB) {
     let targetFormat = fileObj.extension === 'PNG' ? 'WEBP' : fileObj.extension; 
     let minQ = 0.05;
@@ -132,7 +117,7 @@ async function binarySearchCompress(fileObj, targetKB) {
     
     let testBlob = await processImageCanvas(fileObj, targetFormat, maxQ);
     if(testBlob && (testBlob.size / 1024) <= targetKB) {
-        return testBlob;
+        return testBlob.size > fileObj.size ? fileObj.nativeFile : testBlob;
     }
     
     while(iterations < maxIterations) {
@@ -154,10 +139,9 @@ async function binarySearchCompress(fileObj, targetKB) {
     if (!bestBlob) {
        bestBlob = await processImageCanvas(fileObj, targetFormat, 0.1); 
     }
-    return bestBlob;
+    return (bestBlob && bestBlob.size > fileObj.size) ? fileObj.nativeFile : bestBlob;
 }
 
-// Download Trigger with strict memory leak protection (1GB RAM Target)
 function download(blob, name) {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -167,7 +151,6 @@ function download(blob, name) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    // Properly clean memory after download triggers
     setTimeout(() => URL.revokeObjectURL(url), 3000); 
 }
 
